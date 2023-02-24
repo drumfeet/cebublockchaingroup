@@ -7,7 +7,7 @@ import SDK from "weavedb-sdk";
 import { map } from "ramda";
 
 let db;
-const contractTxId = "njiScld9WsjIoT0gl7Z1QobrkEoBSPZBVfjds6iSZsU";
+const contractTxId = "uXCqK-lkYhreEuKf4p_-eOldpHSYL9tddcAFTOB8-W4";
 const COLLECTION_NAME = "messages_post";
 
 export default function Home() {
@@ -137,6 +137,15 @@ export default function Home() {
               color="white"
               textShadow="2px 2px 4px rgba(0, 0, 0, 0.3)"
               fontFamily="monospace"
+              sx={{
+                cursor: "pointer",
+                textDecoration: "none",
+                transition: "all .3s ease-in-out",
+                ":hover": {
+                  opacity: "0.8",
+                  transform: "scale(1.05)",
+                },
+              }}
             >
               {btnText}
             </Text>
@@ -155,18 +164,20 @@ export default function Home() {
     );
   };
 
-  const onWagmiClick = () => {
-    addMessage(true);
+  const onWagmiClick = async () => {
+    console.log("onWagmiClick()");
+    await addMessage(true);
   };
 
-  const onNgmiClick = () => {
-    addMessage(false);
+  const onNgmiClick = async () => {
+    console.log("onNgmiClick()");
+    await addMessage(false);
   };
 
   const NewMessage = () => (
     <Flex mb={4}>
       <Input
-        placeholder="Add your message"
+        placeholder="Add message then click wagmi / ngmi"
         value={message.current}
         onChange={(e) => {
           message.current = e.target.value;
@@ -177,22 +188,25 @@ export default function Home() {
   );
 
   const addMessage = async (isWagmi) => {
-    console.log("addMessageWagmi()");
+    console.log("addMessage()");
 
-    try {
-      await db.add(
-        {
-          message: message.current,
-          date: db.ts(),
-          user_address: db.signer(),
-          wagmi: isWagmi,
-        },
-        COLLECTION_NAME,
-        user
-      );
-      await getMessages();
-    } catch (e) {
-      console.log(e);
+    if (!/^\s*$/.test(message.current)) {
+      try {
+        await db.add(
+          {
+            message: message.current,
+            date: db.ts(),
+            user_address: db.signer(),
+            wagmi: isWagmi,
+          },
+          COLLECTION_NAME,
+          user
+        );
+        message.current = "";
+        await getMessages();
+      } catch (e) {
+        console.log(e);
+      }
     }
   };
 
@@ -202,12 +216,7 @@ export default function Home() {
 
   const Messages = () =>
     map((v) => (
-      <Flex
-        key={v.data.date}
-        sx={{ border: "1px solid #ddd", borderRadius: "5px" }}
-        p={3}
-        my={1}
-      >
+      <Flex sx={{ border: "1px solid #ddd", borderRadius: "5px" }} p={3} my={1}>
         <Box px={3} flex={1} style={{ marginLeft: "10px" }}>
           {v.data.message}
         </Box>
@@ -216,6 +225,36 @@ export default function Home() {
         </Box>
       </Flex>
     ))(messages);
+
+  const Header = () => {
+    return (
+      <Flex justify="center" p={4}>
+        <Box
+          as="a"
+          target="_blank"
+          href="https://t.me/blockchaincebu"
+          sx={{ textDecoration: "underline" }}
+        >
+          Cebu Blockchain Group🚀
+        </Box>
+      </Flex>
+    );
+  };
+
+  const Transactions = () => {
+    return (
+      <Flex justify="center" p={4}>
+        <Box
+          as="a"
+          target="_blank"
+          href={`https://sonar.warp.cc/?#/app/contract/${contractTxId}`}
+          sx={{ textDecoration: "underline" }}
+        >
+          view transactions
+        </Box>
+      </Flex>
+    );
+  };
 
   useEffect(() => {
     checkUser();
@@ -233,6 +272,8 @@ export default function Home() {
       <NavBar />
       <Flex mt="60px" justify="center" p={3}>
         <Box w="100%" maxW="600px">
+          <Header />
+          <Transactions />
           {!isNil(user) ? <NewMessage /> : null}
           <CardsRow />
           <Messages />
