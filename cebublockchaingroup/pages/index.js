@@ -4,9 +4,10 @@ import { useEffect, useState, useRef } from "react";
 import { ethers } from "ethers";
 import lf from "localforage";
 import SDK from "weavedb-sdk";
+import { map } from "ramda";
 
 let db;
-const contractTxId = "_ApoA69a_9i39YT_LqQM59_pr8nHo7GZwKZLTaK8Wk8";
+const contractTxId = "njiScld9WsjIoT0gl7Z1QobrkEoBSPZBVfjds6iSZsU";
 const COLLECTION_NAME = "messages_post";
 
 export default function Home() {
@@ -199,6 +200,23 @@ export default function Home() {
     setMessages(await db.cget(COLLECTION_NAME, ["date", "desc"]));
   };
 
+  const Messages = () =>
+    map((v) => (
+      <Flex
+        key={v.data.date}
+        sx={{ border: "1px solid #ddd", borderRadius: "5px" }}
+        p={3}
+        my={1}
+      >
+        <Box px={3} flex={1} style={{ marginLeft: "10px" }}>
+          {v.data.message}
+        </Box>
+        <Box w="100px" textAlign="center" style={{ marginLeft: "10px" }}>
+          {v.data.user_address.slice(0, 8)}.....
+        </Box>
+      </Flex>
+    ))(messages);
+
   useEffect(() => {
     checkUser();
     setupWeaveDB();
@@ -206,6 +224,7 @@ export default function Home() {
 
   useEffect(() => {
     if (initDB) {
+      getMessages();
     }
   }, [initDB]);
 
@@ -214,8 +233,9 @@ export default function Home() {
       <NavBar />
       <Flex mt="60px" justify="center" p={3}>
         <Box w="100%" maxW="600px">
-          <CardsRow />
           {!isNil(user) ? <NewMessage /> : null}
+          <CardsRow />
+          <Messages />
         </Box>
       </Flex>
     </ChakraProvider>
