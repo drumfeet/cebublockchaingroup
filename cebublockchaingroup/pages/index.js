@@ -1,17 +1,19 @@
-import { Box, ChakraProvider, Flex, Text } from "@chakra-ui/react";
+import { Box, ChakraProvider, Flex, Text, Input } from "@chakra-ui/react";
 import { isNil } from "ramda";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ethers } from "ethers";
 import lf from "localforage";
 import SDK from "weavedb-sdk";
 
 let db;
 const contractTxId = "_ApoA69a_9i39YT_LqQM59_pr8nHo7GZwKZLTaK8Wk8";
-const COLLECTION_NAME = "messages";
+const COLLECTION_NAME = "messages_post";
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [initDB, setInitDB] = useState(false);
+  const [messages, setMessages] = useState([]);
+  let message = useRef();
 
   const setupWeaveDB = async () => {
     db = new SDK({
@@ -146,24 +148,45 @@ export default function Home() {
   const CardsRow = () => {
     return (
       <Flex justifyContent="space-between">
-        <Card btnText="WAGMI" btnClick={addMessageWagmi} />
-        <Card btnText="NGMI" btnClick={addMessageNgmi} />
+        <Card btnText="WAGMI" btnClick={onWagmiClick} />
+        <Card btnText="NGMI" btnClick={onNgmiClick} />
       </Flex>
     );
   };
 
-  const addMessageWagmi = async (message) => {
+  const onWagmiClick = () => {
+    addMessage(true);
+  };
+
+  const onNgmiClick = () => {
+    addMessage(false);
+  };
+
+  const NewMessage = () => (
+    <Flex mb={4}>
+      <Input
+        placeholder="Add your message"
+        value={message.current}
+        onChange={(e) => {
+          message.current = e.target.value;
+        }}
+        sx={{ borderRadius: "5px 0 0 5px" }}
+      />
+    </Flex>
+  );
+
+  const addMessage = async (isWagmi) => {
     console.log("addMessageWagmi()");
 
     try {
       await db.add(
         {
-          message,
+          message: message.current,
           date: db.ts(),
           user_address: db.signer(),
-          wagmi: true,
+          wagmi: isWagmi,
         },
-        "messages",
+        COLLECTION_NAME,
         user
       );
       await getMessages();
@@ -172,24 +195,8 @@ export default function Home() {
     }
   };
 
-  const addMessageNgmi = async (message) => {
-    console.log("addMessageNgmi()");
-
-    try {
-      await db.add(
-        {
-          message,
-          date: db.ts(),
-          user_address: db.signer(),
-          wagmi: false,
-        },
-        "messages",
-        user
-      );
-      await getMessages();
-    } catch (e) {
-      console.log(e);
-    }
+  const getMessages = async () => {
+    setMessages(await db.cget(COLLECTION_NAME, ["date", "desc"]));
   };
 
   useEffect(() => {
@@ -208,6 +215,7 @@ export default function Home() {
       <Flex mt="60px" justify="center" p={3}>
         <Box w="100%" maxW="600px">
           <CardsRow />
+          {!isNil(user) ? <NewMessage /> : null}
         </Box>
       </Flex>
     </ChakraProvider>
