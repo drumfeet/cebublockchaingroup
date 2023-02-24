@@ -1,9 +1,4 @@
-import {
-  Box,
-  ChakraProvider,
-  Flex,
-  Text,
-} from "@chakra-ui/react";
+import { Box, ChakraProvider, Flex, Text } from "@chakra-ui/react";
 import { isNil } from "ramda";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
@@ -114,7 +109,7 @@ export default function Home() {
   };
 
   const Card = (props) => {
-    const { btnText } = props;
+    const { btnText, btnClick } = props;
 
     return (
       <Box
@@ -131,7 +126,7 @@ export default function Home() {
           alignItems="center"
           justifyContent="center"
         >
-          <Box w="100%" minW="200px">
+          <Box w="100%" minW="200px" onClick={btnClick}>
             <Text
               fontSize="5xl"
               fontWeight="bold"
@@ -151,10 +146,50 @@ export default function Home() {
   const CardsRow = () => {
     return (
       <Flex justifyContent="space-between">
-        <Card btnText="WAGMI" />
-        <Card btnText="NGMI" />
+        <Card btnText="WAGMI" btnClick={addMessageWagmi} />
+        <Card btnText="NGMI" btnClick={addMessageNgmi} />
       </Flex>
     );
+  };
+
+  const addMessageWagmi = async (message) => {
+    console.log("addMessageWagmi()");
+
+    try {
+      await db.add(
+        {
+          message,
+          date: db.ts(),
+          user_address: db.signer(),
+          wagmi: true,
+        },
+        "messages",
+        user
+      );
+      await getMessages();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const addMessageNgmi = async (message) => {
+    console.log("addMessageNgmi()");
+
+    try {
+      await db.add(
+        {
+          message,
+          date: db.ts(),
+          user_address: db.signer(),
+          wagmi: false,
+        },
+        "messages",
+        user
+      );
+      await getMessages();
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   useEffect(() => {
